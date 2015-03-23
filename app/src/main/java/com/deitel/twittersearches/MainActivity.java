@@ -8,6 +8,7 @@ import java.util.Collections;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentTransaction;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -26,7 +27,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-public class MainActivity extends Activity
+public class MainActivity extends Activity implements FirstFragment.OnFragmentInteractionListener
 {
    // name of SharedPreferences XML file that stores the saved searches 
    private static final String SEARCHES = "searches";
@@ -58,8 +59,11 @@ public class MainActivity extends Activity
       // create ArrayAdapter and use it to bind tags to the ListView
       adapter = new ArrayAdapter<String>(this, R.layout.list_item, tags);
       // MOVE to ListFragment _ setListAdapter(adapter);
-      
-      // register listener to save a new or edited search 
+      FirstFragment firstFragment=FirstFragment.newInstance(tags);
+       FragmentTransaction transaction=getFragmentManager().beginTransaction();
+       transaction.add(R.id.fragment,firstFragment);
+       transaction.commit();
+      // register listener to save a new or edited search
       ImageButton saveButton = 
          (ImageButton) findViewById(R.id.saveButton);
       saveButton.setOnClickListener(saveButtonListener);
@@ -264,7 +268,10 @@ public class MainActivity extends Activity
                preferencesEditor.apply(); // saves the changes
 
                // rebind tags ArrayList to ListView to show updated list
-               adapter.notifyDataSetChanged();                    
+                FirstFragment firstFragment=FirstFragment.newInstance(tags);
+                FragmentTransaction transaction=getFragmentManager().beginTransaction();
+                transaction.replace(R.id.fragment,firstFragment);
+                transaction.commit();
             }
          } // end OnClickListener
       ); // end call to setPositiveButton
@@ -275,6 +282,39 @@ public class MainActivity extends Activity
    // ADDED to set up the ListFragment
    public ArrayAdapter<String> getAdapter(){return adapter;}
 
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
+
+    @Override
+    public void showResult(String tag) {
+        String urlString = getString(R.string.searchURL) +
+                Uri.encode(savedSearches.getString(tag, ""), "UTF-8");
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment, SecondFragment.newInstance(urlString))
+                .addToBackStack(null)
+                .commit();
+
+    }
+
+    @Override
+    public void share(String tag) {
+        shareSearch(tag);
+    }
+
+    @Override
+    public void edit(String tag) {
+        tagEditText.setText(tag);
+        queryEditText.setText(
+                savedSearches.getString(tag, ""));
+    }
+
+    @Override
+    public void delete(String tag) {
+        deleteSearch(tag);
+    }
 } // end class MainActivity
 
 
